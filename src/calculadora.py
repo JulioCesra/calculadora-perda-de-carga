@@ -20,32 +20,55 @@ class calculadora_perda_de_carga():
         return perda_carga_localizada
     
     def calculo_numero_reynolds(
-        Viscosidade_cinematica: Union[int, float],
-        Velocidade_media_escoamento: Union[int, float],
-        Diametro_interno_do_tubo: Union[int, float]
+        self,
+        viscosidade_cinematica: Union[int, float],
+        velocidade_media_fluido: Union[int, float],
+        diametro_interno: Union[int, float]
         ) -> Union[int, float]:
-        numero_reynolds = (Velocidade_media_escoamento * Diametro_interno_do_tubo) / Viscosidade_cinematica
-        return numero_reynolds, Diametro_interno_do_tubo
 
+        if viscosidade_cinematica == 0.00:
+            raise ZeroDivisionError(
+                'Não é possível realizar o cálculo com a viscosidade cinemática igual a zero!'
+                )
+        
+        numero_reynolds = (velocidade_media_fluido * diametro_interno) / viscosidade_cinematica
+        return numero_reynolds
+
+    def calculo_rugosidade_relativa(
+        self,
+        rugosidade_absoluta: Union[int, float],
+        diametro_interno: Union[int, float]
+        ) -> Union[int, float]:
+        rugosidade_relativa = rugosidade_absoluta / diametro_interno
+        return rugosidade_relativa
+    
     def calculo_coeficiente_de_atrito(
         self,
-        Numero_reynolds: Union[int, float],
-        Diametro_interno_do_tubo: Union[int, float],
-        Rugosidade_absoluta: Union[int, float]
+        numero_reynolds: Union[int, float],
+        rugosidade_relativa: Union[int, float]
         ) -> Union[int, float]: 
-        if Numero_reynolds <= 0:
+        if numero_reynolds <= 0:
             return 0
         
-        if Numero_reynolds < 2000:
-            return 64 / Numero_reynolds
+        if numero_reynolds < 2000:
+            return 64 / numero_reynolds
         
-        elif Numero_reynolds >= 2000:
-            rugosidade_relativa = Rugosidade_absoluta/ Diametro_interno_do_tubo
+        elif numero_reynolds >= 4000:
             try:
-                termo_log = (rugosidade_relativa / 3.70) + (5.74 / pow(Numero_reynolds, 0.9))
+                termo_log = (rugosidade_relativa / 3.70) + (5.74 / pow(numero_reynolds, 0.9))
                 denominador = pow(np.log10(termo_log), 2)
                 fator_atrito = 0.25 / denominador
                 return fator_atrito
             except Exception:
                 return 0
         return 0
+
+    def calculo_perda_de_carga_distribuida(
+        self,
+        fator_de_atrito: Union[int, float],
+        comprimento_da_tubulacao: Union[int, float],
+        diametro_interno_da_tubulacao: Union[int, float],
+        velocidade_media_do_escoamento: Union[int, float]
+        ) -> Union[int, float]:
+        perda_carga_distribuida = fator_de_atrito * (comprimento_da_tubulacao / diametro_interno_da_tubulacao) * (pow(velocidade_media_do_escoamento,2) / (2 * self.ACELERACAO_GRAVITACIONAL))
+        return perda_carga_distribuida
